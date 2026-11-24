@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Backyard Fish List</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --card: #181b24;
+      --border: #282d3c;
+      --text: #e6e8f0;
+      --muted: #8b93a7;
+      --gold: #f5b942;
+      --cyan: #38bdf8;
+      --purple: #c084fc;
+      --accent: #3b82f6;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 24px 16px 60px;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 800px; /* widened from 680px for 5 columns */
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .discord-btn {
+      background: #5865F2;
+      color: #fff;
+      border: none;
+      padding: 9px 14px;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .discord-btn:hover { background: #4752c4; }
+
+    /* Controls */
+    .controls {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .search-input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      outline: none;
+    }
+    .search-input:focus { border-color: var(--accent); }
+
+    .filter-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .filter-label {
+      font-size: 0.78rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-right: 4px;
+    }
+
+    .pill {
+      background: var(--bg);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .pill:hover { color: var(--text); border-color: #3e455b; }
+    .pill.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    /* Tier Sections */
+    .tier-section {
+      margin-bottom: 20px;
+    }
+
+    .tier-header {
+      color: var(--gold);
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .fish-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .fish-table th, .fish-table td {
+      padding: 12px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .fish-table tr:last-child td { border-bottom: none; }
+
+    .fish-table th {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .fish-name {
+      font-weight: 600;
+      font-size: 0.98rem;
+    }
+
+    .bait-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .bait-badge {
+      background: rgba(255, 255, 255, 0.06);
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      color: var(--text);
+    }
+
+    .time-always { color: var(--cyan); font-size: 0.88rem; }
+    .time-window { color: var(--purple); font-size: 0.88rem; font-variant-numeric: tabular-nums; }
+    .time-none   { color: var(--muted); font-size: 0.88rem; }
+    
+    .season-badge {
+      font-size: 0.85rem;
+      color: var(--text);
+    }
+    .size-cell {
+      font-variant-numeric: tabular-nums;
+      font-size: 0.88rem;
+      color: var(--text);
+    }
+
+    .empty-state {
+      text-align: center;
+      color: var(--muted);
+      padding: 40px 16px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Thiocc's Backyard Fish</h1>
+      <button class="discord-btn" id="copyDiscordBtn">Copy for Discord</button>
+    </header>
+
+    <div class="controls">
+      <input type="text" id="searchInput" class="search-input" placeholder="Search fish name..." />
+      
+      <div class="filter-row" id="starFilters">
+        <span class="filter-label">Stars:</span>
+        <button class="pill active" data-star="all">All</button>
+        <button class="pill" data-star="1">1 ★</button>
+        <button class="pill" data-star="2">2 ★</button>
+        <button class="pill" data-star="3">3 ★</button>
+        <button class="pill" data-star="4">4 ★</button>
+        <button class="pill" data-star="5">5 ★</button>
+      </div>
+
+      <div class="filter-row" id="baitFilters">
+        <span class="filter-label">Bait:</span>
+        <button class="pill active" data-bait="all">All</button>
+        <button class="pill" data-bait="Dough">Dough</button>
+        <button class="pill" data-bait="Insects">Insects</button>
+        <button class="pill" data-bait="Fish">Fish</button>
+        <button class="pill" data-bait="Meat">Meat</button>
+        <button class="pill" data-bait="Vegetal">Vegetal</button>
+      </div>
+      <div class="filter-row" id="timeFilters">
+        <span class="filter-label">Time:</span>
+        <button class="pill active" data-time="all">All</button>
+        <button class="pill" data-time="always">Always</button>
+        <button class="pill" data-time="timed">Time-Based</button>
+      </div>
+
+      <div class="filter-row" id="seasonFilters">
+        <span class="filter-label">Season:</span>
+        <button class="pill active" data-season="all">All</button>
+        <button class="pill" data-season="always">Always</button>
+        <button class="pill" data-season="seasonal">Seasonal</button>
+      </div>
+
+    </div>
+
+    <div id="listContainer"></div>
+  </div>
+
+  <script>
+    // ==========================================
+    // EDIT YOUR FISH LIST HERE
+    // season: leave "" or omit for "Always", or set e.g. "Jun 1 - Aug 31"
+    // maxSize: number in cm (e.g. 120), or null if unknown
+    // ==========================================
+    const myFish = [
+      { name: "Alpine Bullhead",   discordName: "Alpine Bullhead", stars: 1, bait: ["Insects"],            time: "",              season: "Always",        maxSize: 11 },
+      { name: "Common Bleak",      discordName: "Common Bleak",    stars: 1, bait: ["Dough", "Insects"],            time: "",              season: "Always",        maxSize: 25 },
+      { name: "Black Molly",       discordName: "Black Molly",     stars: 2, bait: ["Insects","Vegetal"],           time: "",              season: "Always",        maxSize: 9 },
+      { name: "Blue Lyretail",     discordName: "Blue Lyretail",   stars: 2, bait: ["Meat", "Insects"],             time: "12:00 - 18:00", season: "Always",        maxSize: 7 },
+      { name: "Clown Loach",       discordName: "Clown Loach",     stars: 2, bait: ["Insects", "Vegetal"],          time: "",              season: "Always",        maxSize: 52 },
+      { name: "African Knifefish", discordName: "African Knife",   stars: 3, bait: ["Fish", "Insects"],             time: "Always",        season: "Always",        maxSize: 165 },
+      { name: "Redhead Cichlid",   discordName: "Redhead Cichlid", stars: 3, bait: ["Dough", "Insects", "Vegetal"], time: "Always",        season: "Always",        maxSize: 35 },
+      { name: "Green Arowana",     discordName: "Green Arowana",   stars: 4, bait: ["Fish", "Insects"],             time: "01:00 - 06:00", season: "May 1 - Sep 30", maxSize: 62 }
+    ];
+
+    // State
+    let selectedStar = "all";
+    let selectedBait = "all";
+    let selectedTime = "all";
+    let selectedSeason = "all";
+    let searchQuery = "";
+
+    const listContainer = document.getElementById("listContainer");
+
+    function renderList() {
+      const filtered = myFish.filter(fish => {
+        const matchesStar = selectedStar === "all" || fish.stars === Number(selectedStar);
+        const matchesBait = selectedBait === "all" || fish.bait.includes(selectedBait);
+        const matchesSearch = fish.name.toLowerCase().includes(searchQuery.toLowerCase());
+
+        // Time filter: "Always" vs "Time-Based"
+        const timeVal = (fish.time || "").trim().toLowerCase();
+        const isTimeAlways = timeVal === "" || timeVal === "always";
+        const matchesTime =
+          selectedTime === "all" ||
+          (selectedTime === "always" && isTimeAlways) ||
+          (selectedTime === "timed" && !isTimeAlways);
+
+        // Season filter: "Always" (default) vs "Seasonal"
+        const seasonVal = (fish.season || "Always").trim().toLowerCase();
+        const isSeasonAlways = seasonVal === "" || seasonVal === "always";
+        const matchesSeason =
+          selectedSeason === "all" ||
+          (selectedSeason === "always" && isSeasonAlways) ||
+          (selectedSeason === "seasonal" && !isSeasonAlways);
+
+        return matchesStar && matchesBait && matchesSearch && matchesTime && matchesSeason;
+      });
+
+      if (filtered.length === 0) {
+        listContainer.innerHTML = `<div class="empty-state">No fish match those filters.</div>`;
+        return;
+      }
+
+      let html = "";
+      for (let star = 1; star <= 5; star++) {
+        const group = filtered.filter(f => f.stars === star);
+        if (group.length === 0) continue;
+
+        const starsText = "★".repeat(star) + ` ${star} STAR`;
+        const rows = group.map(fish => {
+          const baitBadges = fish.bait.map(b => `<span class="bait-badge">${b}</span>`).join("");
+
+          // Time display
+          let timeHtml = `<span class="time-always">Always</span>`;
+          if (fish.time && fish.time.toLowerCase() !== "always") {
+            timeHtml = `<span class="time-window">${fish.time}</span>`;
+          }
+
+          // Season display (defaults to Always)
+          const seasonText = (fish.season && fish.season.trim()) ? fish.season : "Always";
+          const seasonHtml = seasonText.toLowerCase() === "always"
+            ? `<span class="time-always">Always</span>`
+            : `<span class="season-badge">${seasonText}</span>`;
+
+          // Max Size display
+          const sizeHtml = fish.maxSize != null
+            ? `<span class="size-cell">${fish.maxSize} cm</span>`
+            : `<span class="time-none">—</span>`;
+
+          return `
+            <tr>
+              <td class="fish-name">${fish.name}</td>
+              <td><div class="bait-tags">${baitBadges}</div></td>
+              <td>${timeHtml}</td>
+              <td>${seasonHtml}</td>
+              <td>${sizeHtml}</td>
+            </tr>
+          `;
+        }).join("");
+
+        html += `
+          <section class="tier-section">
+            <div class="tier-header">${starsText}</div>
+            <table class="fish-table">
+              <thead>
+                <tr>
+                  <th style="width: 26%;">Fish</th>
+                  <th style="width: 28%;">Bait</th>
+                  <th style="width: 17%;">Time</th>
+                  <th style="width: 17%;">Season</th>
+                  <th style="width: 12%;">Max Size</th>
+                </tr>
+              </thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </section>
+        `;
+      }
+
+      listContainer.innerHTML = html;
+    }
+
+    // Search listener
+    document.getElementById("searchInput").addEventListener("input", (e) => {
+      searchQuery = e.target.value;
+      renderList();
+    });
+
+    // Helper for pill filter groups
+    function bindPillGroup(containerId, dataKey, setter) {
+      document.getElementById(containerId).addEventListener("click", (e) => {
+        if (!e.target.classList.contains("pill")) return;
+        document.querySelectorAll(`#${containerId} .pill`).forEach(p => p.classList.remove("active"));
+        e.target.classList.add("active");
+        setter(e.target.dataset[dataKey]);
+        renderList();
+      });
+    }
+
+    bindPillGroup("starFilters", "star", val => selectedStar = val);
+    bindPillGroup("baitFilters", "bait", val => selectedBait = val);
+    bindPillGroup("timeFilters", "time", val => selectedTime = val);
+    bindPillGroup("seasonFilters", "season", val => selectedSeason = val);
+
+    // Generate & Copy Discord ANSI format
+    document.getElementById("copyDiscordBtn").addEventListener("click", () => {
+      const esc = "\u001b";
+      let blocks = [];
+
+      for (let star = 1; star <= 5; star++) {
+        const group = myFish.filter(f => f.stars === star);
+        if (group.length === 0) continue;
+
+        let lines = [`${esc}[1;33m${"★".repeat(star)} ${star} STAR${esc}[0m`];
+        group.forEach(fish => {
+          const nameCol = (fish.discordName || fish.name).padEnd(15, " ");
+          const baitCol = fish.bait.map(b => b === "Vegetal" && fish.bait.length > 2 ? "Veg" : b).join("/");
+          lines.push(`  ${nameCol} | ${baitCol}`);
+
+          if (fish.time) {
+            const colorCode = fish.time.toLowerCase() === "always" ? "0;36m" : "0;35m";
+            lines.push(`  ${esc}[${colorCode}(${fish.time})${esc}[0m`);
+          }
+        });
+        blocks.push(lines.join("\n"));
+      }
+
+      const discordPayload = "```ansi\n" + blocks.join("\n\n") + "\n```";
+      navigator.clipboard.writeText(discordPayload).then(() => {
+        const btn = document.getElementById("copyDiscordBtn");
+        btn.textContent = "Copied!";
+        setTimeout(() => (btn.textContent = "Copy for Discord"), 1800);
+      });
+    });
+
+    // Initial render
+    renderList();
+  </script>
+</body>
+</html>
