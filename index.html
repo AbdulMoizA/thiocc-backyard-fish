@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>My Backyard Fish List</title>
+  <title>Thiocc's Backyard Fish</title>
   <style>
     :root {
       --bg: #0f1117;
@@ -28,23 +28,87 @@
     }
 
     .container {
-      max-width: 800px; /* widened from 680px for 5 columns */
+      max-width: 820px;
       margin: 0 auto;
     }
 
     header {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
       align-items: center;
       gap: 12px;
       margin-bottom: 20px;
     }
 
     h1 {
-      font-size: 1.5rem;
+      font-size: 1.45rem;
       font-weight: 700;
       letter-spacing: -0.02em;
+    }
+
+    /* UTC 00:00 Timer Widget */
+    .utc-timer-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 7px 14px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .utc-timer-label {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+    }
+
+    .utc-timer-display {
+      font-size: 1.15rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.03em;
+      color: var(--cyan);
+    }
+
+    .color-controls {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 2px;
+    }
+
+    .color-swatch {
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      cursor: pointer;
+      padding: 0;
+      transition: transform 0.12s ease;
+    }
+    .color-swatch:hover { transform: scale(1.2); }
+
+    .color-picker-input {
+      width: 16px;
+      height: 16px;
+      border: none;
+      background: none;
+      padding: 0;
+      cursor: pointer;
+    }
+    .color-picker-input::-webkit-color-swatch-wrapper { padding: 0; }
+    .color-picker-input::-webkit-color-swatch {
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+    }
+
+    .header-actions {
+      display: flex;
+      justify-content: flex-end;
     }
 
     .discord-btn {
@@ -57,8 +121,19 @@
       font-weight: 600;
       cursor: pointer;
       transition: background 0.15s ease;
+      white-space: nowrap;
     }
     .discord-btn:hover { background: #4752c4; }
+
+    @media (max-width: 640px) {
+      header {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+      .header-actions {
+        justify-content: center;
+      }
+    }
 
     /* Controls */
     .controls {
@@ -179,7 +254,7 @@
     .time-always { color: var(--cyan); font-size: 0.88rem; }
     .time-window { color: var(--purple); font-size: 0.88rem; font-variant-numeric: tabular-nums; }
     .time-none   { color: var(--muted); font-size: 0.88rem; }
-    
+
     .season-badge {
       font-size: 0.85rem;
       color: var(--text);
@@ -204,7 +279,24 @@
   <div class="container">
     <header>
       <h1>Thiocc's Backyard Fish</h1>
-      <button class="discord-btn" id="copyDiscordBtn">Copy for Discord</button>
+
+      <div class="utc-timer-box">
+        <span class="utc-timer-label">UTC 00:00 Reset In</span>
+        <div class="utc-timer-display" id="utcTimerDisplay">--:--:--</div>
+        <div class="color-controls" title="Choose timer text color">
+          <button class="color-swatch" style="background: #38bdf8;" data-color="#38bdf8" aria-label="Cyan"></button>
+          <button class="color-swatch" style="background: #f5b942;" data-color="#f5b942" aria-label="Gold"></button>
+          <button class="color-swatch" style="background: #c084fc;" data-color="#c084fc" aria-label="Purple"></button>
+          <button class="color-swatch" style="background: #4ade80;" data-color="#4ade80" aria-label="Green"></button>
+          <button class="color-swatch" style="background: #f87171;" data-color="#f87171" aria-label="Red"></button>
+          <button class="color-swatch" style="background: #e6e8f0;" data-color="#e6e8f0" aria-label="White"></button>
+          <input type="color" id="customTimerColor" class="color-picker-input" value="#38bdf8" title="Custom color" />
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button class="discord-btn" id="copyDiscordBtn">Copy for Discord</button>
+      </div>
     </header>
 
     <div class="controls">
@@ -228,7 +320,11 @@
         <button class="pill" data-bait="Fish">Fish</button>
         <button class="pill" data-bait="Meat">Meat</button>
         <button class="pill" data-bait="Vegetal">Vegetal</button>
+        <button class="pill" data-bait="Hook">Hook</button>
+        <button class="pill" data-bait="Lures">Lures</button>
+        <button class="pill" data-bait="Shark Lure">Shark Lure</button>
       </div>
+
       <div class="filter-row" id="timeFilters">
         <span class="filter-label">Time:</span>
         <button class="pill active" data-time="all">All</button>
@@ -242,7 +338,6 @@
         <button class="pill" data-season="always">Always</button>
         <button class="pill" data-season="seasonal">Seasonal</button>
       </div>
-
     </div>
 
     <div id="listContainer"></div>
@@ -255,17 +350,59 @@
     // maxSize: number in cm (e.g. 120), or null if unknown
     // ==========================================
     const myFish = [
-      { name: "Alpine Bullhead",   discordName: "Alpine Bullhead", stars: 1, bait: ["Insects"],            time: "",              season: "Always",        maxSize: 11 },
-      { name: "Common Bleak",      discordName: "Common Bleak",    stars: 1, bait: ["Dough", "Insects"],            time: "",              season: "Always",        maxSize: 25 },
-      { name: "Black Molly",       discordName: "Black Molly",     stars: 2, bait: ["Insects","Vegetal"],           time: "",              season: "Always",        maxSize: 9 },
-      { name: "Blue Lyretail",     discordName: "Blue Lyretail",   stars: 2, bait: ["Meat", "Insects"],             time: "12:00 - 18:00", season: "Always",        maxSize: 7 },
-      { name: "Clown Loach",       discordName: "Clown Loach",     stars: 2, bait: ["Insects", "Vegetal"],          time: "",              season: "Always",        maxSize: 52 },
-      { name: "African Knifefish", discordName: "African Knife",   stars: 3, bait: ["Fish", "Insects"],             time: "Always",        season: "Always",        maxSize: 165 },
-      { name: "Redhead Cichlid",   discordName: "Redhead Cichlid", stars: 3, bait: ["Dough", "Insects", "Vegetal"], time: "Always",        season: "Always",        maxSize: 35 },
-      { name: "Green Arowana",     discordName: "Green Arowana",   stars: 4, bait: ["Fish", "Insects"],             time: "01:00 - 06:00", season: "May 1 - Sep 30", maxSize: 62 }
+      { name: "Alpine Bullhead",     discordName: "Alpine Bullhead",     stars: 1, bait: ["Insects"],                     time: "",              season: "Always", maxSize: 11 },
+      { name: "Common Bleak",        discordName: "Common Bleak",        stars: 1, bait: ["Dough", "Insects"],            time: "",              season: "Always", maxSize: 25 },
+      { name: "Black Molly",         discordName: "Black Molly",         stars: 2, bait: ["Insects", "Vegetal"],          time: "",              season: "Always", maxSize: 9 },
+      { name: "Blue Lyretail",       discordName: "Blue Lyretail",       stars: 2, bait: ["Meat", "Insects"],             time: "12:00 - 18:00", season: "Always", maxSize: 7 },
+      { name: "Clown Loach",         discordName: "Clown Loach",         stars: 2, bait: ["Insects", "Vegetal"],          time: "",              season: "Always", maxSize: 52 },
+      { name: "Corydoras Julii",     discordName: "Corydoras Julii",     stars: 2, bait: ["Dough", "Insects", "Vegetal"], time: "",              season: "Always", maxSize: 6 },
+      { name: "Hairy Pufferfish",    discordName: "Hairy Pufferfish",    stars: 2, bait: ["Fish", "Insects"],             time: "",              season: "Always", maxSize: 12 },
+      { name: "Pumpkinseed Sunfish", discordName: "Pumpkinseed Sunfish", stars: 2, bait: ["Fish", "Insects", "Lures"],    time: "08:00 - 18:00", season: "Always", maxSize: 25 },
+      { name: "Striped Headstander", discordName: "Striped Headstander", stars: 2, bait: ["Dough", "Insects", "Vegetal"], time: "08:00 - 18:00", season: "Always", maxSize: 22 },
+      { name: "African Knifefish",   discordName: "African Knife",       stars: 3, bait: ["Fish", "Insects"],             time: "Always",        season: "Always", maxSize: 165 },
+      { name: "Redhead Cichlid",     discordName: "Redhead Cichlid",     stars: 3, bait: ["Dough", "Insects", "Vegetal"], time: "Always",        season: "Always", maxSize: 35 },
+      { name: "Green Arowana",       discordName: "Green Arowana",       stars: 4, bait: ["Fish", "Insects"],             time: "01:00 - 06:00", season: "Always", maxSize: 62 },
+      { name: "Kuhli Loach",         discordName: "Kuhli Loach",         stars: 4, bait: ["Insects"],                     time: "20:00 - 04:00", season: "Always", maxSize: 11 }
     ];
 
-    // State
+    // ==========================================
+    // UTC 00:00 COUNTDOWN TIMER & COLOR PICKER
+    // ==========================================
+    const utcTimerDisplay = document.getElementById("utcTimerDisplay");
+    const customTimerColor = document.getElementById("customTimerColor");
+
+    function setTimerColor(hex) {
+      utcTimerDisplay.style.color = hex;
+      customTimerColor.value = hex;
+      localStorage.setItem("thiocc_timer_color", hex);
+    }
+
+    // Load saved color if available
+    const savedColor = localStorage.getItem("thiocc_timer_color");
+    if (savedColor) setTimerColor(savedColor);
+
+    document.querySelectorAll(".color-swatch").forEach(btn => {
+      btn.addEventListener("click", () => setTimerColor(btn.dataset.color));
+    });
+
+    customTimerColor.addEventListener("input", (e) => {
+      setTimerColor(e.target.value);
+    });
+
+   function updateUtcClock() {
+      const now = new Date();
+      const hours = String(now.getUTCHours()).padStart(2, "0");
+      const minutes = String(now.getUTCMinutes()).padStart(2, "0");
+      const seconds = String(now.getUTCSeconds()).padStart(2, "0");
+
+      utcTimerDisplay.textContent = `${hours}:${minutes}:${seconds} UTC`;
+    }
+
+    updateUtcClock();
+    setInterval(updateUtcClock, 1000);
+    // ==========================================
+    // FILTER & TABLE RENDERING
+    // ==========================================
     let selectedStar = "all";
     let selectedBait = "all";
     let selectedTime = "all";
@@ -280,7 +417,6 @@
         const matchesBait = selectedBait === "all" || fish.bait.includes(selectedBait);
         const matchesSearch = fish.name.toLowerCase().includes(searchQuery.toLowerCase());
 
-        // Time filter: "Always" vs "Time-Based"
         const timeVal = (fish.time || "").trim().toLowerCase();
         const isTimeAlways = timeVal === "" || timeVal === "always";
         const matchesTime =
@@ -288,7 +424,6 @@
           (selectedTime === "always" && isTimeAlways) ||
           (selectedTime === "timed" && !isTimeAlways);
 
-        // Season filter: "Always" (default) vs "Seasonal"
         const seasonVal = (fish.season || "Always").trim().toLowerCase();
         const isSeasonAlways = seasonVal === "" || seasonVal === "always";
         const matchesSeason =
@@ -313,19 +448,16 @@
         const rows = group.map(fish => {
           const baitBadges = fish.bait.map(b => `<span class="bait-badge">${b}</span>`).join("");
 
-          // Time display
           let timeHtml = `<span class="time-always">Always</span>`;
           if (fish.time && fish.time.toLowerCase() !== "always") {
             timeHtml = `<span class="time-window">${fish.time}</span>`;
           }
 
-          // Season display (defaults to Always)
           const seasonText = (fish.season && fish.season.trim()) ? fish.season : "Always";
           const seasonHtml = seasonText.toLowerCase() === "always"
             ? `<span class="time-always">Always</span>`
             : `<span class="season-badge">${seasonText}</span>`;
 
-          // Max Size display
           const sizeHtml = fish.maxSize != null
             ? `<span class="size-cell">${fish.maxSize} cm</span>`
             : `<span class="time-none">—</span>`;
@@ -363,13 +495,11 @@
       listContainer.innerHTML = html;
     }
 
-    // Search listener
     document.getElementById("searchInput").addEventListener("input", (e) => {
       searchQuery = e.target.value;
       renderList();
     });
 
-    // Helper for pill filter groups
     function bindPillGroup(containerId, dataKey, setter) {
       document.getElementById(containerId).addEventListener("click", (e) => {
         if (!e.target.classList.contains("pill")) return;
